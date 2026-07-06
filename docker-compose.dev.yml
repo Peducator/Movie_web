@@ -10,8 +10,6 @@ services:
       MYSQL_PASSWORD: ${MYSQL_PASSWORD}
     ports:
       - "3307:3306"
-    networks:
-      - cinema_network
 
   redis:
     image: redis:7.2-alpine
@@ -19,20 +17,10 @@ services:
     restart: unless-stopped
     ports:
       - "6379:6379"
-    networks:
-      - cinema_network
 
   nginx:
     build:
       context: ./backend/nginx
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev
     ports:
       - "8080:80"
-    depends_on:
-      - backend
-    networks:
-      - cinema_network
-
-networks:
-  cinema_network:
-    driver: bridge
