@@ -1,22 +1,9 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
-generator client {
-  provider = "prisma-client"
-  output   = "../generated/prisma"
-}
-
-datasource db {
-  provider = "postgresql"
-}
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "mysql"
   url      = env("DATABASE_URL")
 }
 
@@ -80,10 +67,10 @@ model Showtime {
 }
 
 model Transaction {
-  transaction_id         Int       @id @default(autoincrement())
+  transaction_id         Int      @id @default(autoincrement())
   transaction_amount     Float
   transaction_status     String
-  transaction_created_at DateTime  @default(now())
+  transaction_created_at DateTime @default(now())
   tickets                Ticket[]
 
   @@map("transactions")
