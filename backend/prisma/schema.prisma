@@ -1,0 +1,105 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Get a free hosted Postgres database in seconds: `npx create-db`
+
+generator client {
+  provider = "prisma-client"
+  output   = "../generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  user_id       Int       @id @default(autoincrement())
+  user_name     String
+  user_password String
+  user_email    String    @unique
+  user_phone    String?
+  age           Int?
+  tickets       Ticket[]
+
+  @@map("users")
+}
+
+model Movie {
+  movie_id          Int        @id @default(autoincrement())
+  movie_name        String
+  movie_duration    Int
+  movie_genre       String
+  movie_poster_url  String?
+  movie_description String?
+  showtimes         Showtime[]
+
+  @@map("movies")
+}
+
+model Room {
+  room_id       Int        @id @default(autoincrement())
+  room_name     String
+  room_capacity Int
+  seats         Seat[]
+  showtimes     Showtime[]
+
+  @@map("rooms")
+}
+
+model Seat {
+  seat_id   Int      @id @default(autoincrement())
+  room_id   Int
+  seat_code String
+  seat_type String
+  room      Room     @relation(fields: [room_id], references: [room_id])
+  tickets   Ticket[]
+
+  @@map("seats")
+}
+
+model Showtime {
+  showtime_id Int      @id @default(autoincrement())
+  room_id     Int
+  movie_id    Int
+  start_time  String
+  end_time    String
+  date        DateTime
+  room        Room     @relation(fields: [room_id], references: [room_id])
+  movie       Movie    @relation(fields: [movie_id], references: [movie_id])
+  tickets     Ticket[]
+
+  @@map("showtimes")
+}
+
+model Transaction {
+  transaction_id         Int       @id @default(autoincrement())
+  transaction_amount     Float
+  transaction_status     String
+  transaction_created_at DateTime  @default(now())
+  tickets                Ticket[]
+
+  @@map("transactions")
+}
+
+model Ticket {
+  ticket_id      Int         @id @default(autoincrement())
+  user_id        Int
+  showtime_id    Int
+  seat_id        Int
+  transaction_id Int
+  ticket_status  String
+  user           User        @relation(fields: [user_id], references: [user_id])
+  showtime       Showtime    @relation(fields: [showtime_id], references: [showtime_id])
+  seat           Seat        @relation(fields: [seat_id], references: [seat_id])
+  transaction    Transaction @relation(fields: [transaction_id], references: [transaction_id])
+
+  @@map("tickets")
+}
