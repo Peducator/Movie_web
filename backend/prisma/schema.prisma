@@ -14,8 +14,8 @@ model User {
   user_email    String    @unique
   user_phone    String?
   age           Int?
+  refresh_token String?
   tickets       Ticket[]
-
   @@map("users")
 }
 

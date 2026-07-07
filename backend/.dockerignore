@@ -4,3 +4,5 @@ node_modules
 *.log
 .env
 package-lock.json
+/data-gen
+/prisma/migrations 
