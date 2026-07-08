@@ -4,6 +4,6 @@ const { accessToken } = require("../middlewares/auth_middlewares");
 
 router.post("/", accessToken, bookTicket);
 router.delete("/:id", accessToken, cancelTicket);
-router.get("/", accessToken, getUserTickets);
+router.get("/my-tickets", accessToken, getUserTickets);
 
 module.exports = router;
