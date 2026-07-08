@@ -124,5 +124,24 @@ const authRefreshToken = async (req, res) => {
   }
 };
 
+const googleCallback = async (req, res) => {
+  const accessToken = jwt.sign(
+    { id: req.user.user_id, email: req.user.user_email },
+    process.env.JWT_SECRET,
+    { expiresIn: "15m" }
+  );
+  const refreshToken = jwt.sign(
+    { id: req.user.user_id, email: req.user.user_email },
+    process.env.JWT_REFRESH_SECRET,
+    { expiresIn: "7d" }
+  );
 
-module.exports = { login, register, logout, authRefreshToken };
+  await prisma.user.update({
+    where: { user_id: req.user.user_id },
+    data: { refresh_token: refreshToken },
+  });
+
+  return res.status(200).json({ accessToken, refreshToken });
+};
+
+module.exports = { login, register, logout, authRefreshToken, googleCallback };

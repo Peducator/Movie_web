@@ -1,10 +1,18 @@
 const router = require("express").Router();
-const AuthController = require("../controllers/auth_controllers");
-const { authMiddleware, authRefreshToken } = require("../middlewares/auth_middlewares");
+const {register, login , authRefreshToken, logout, googleCallback} = require("../controllers/auth_controllers");
+const { adminMiddleware, accessToken } = require("../middlewares/auth_middlewares");
+const passport = require("../google_config/passport");
 
-router.post("/register", AuthController.register);
-router.post("/login", AuthController.login);
-router.post("/refresh-token", AuthController.authRefreshToken);
-router.post("/logout", AuthController.logout);
+router.post("/register", register);
+router.post("/login", login);
+router.post("/refresh-token", authRefreshToken);
+router.post("/logout", logout);
+router.get("/google", passport.authenticate("google", { scope: ["profile", "email"] }));
+
+router.get(
+  "/google/callback",
+  passport.authenticate("google", { session: false, failureRedirect: "/login" }),
+  googleCallback
+);
 
 module.exports = router;
