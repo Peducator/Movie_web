@@ -26,7 +26,6 @@ const authLimiter = rateLimit({
 });
 
 app.use(globalLimiter);
-app.use("/auth", authLimiter, authRoutes);
 
 app.use(express.json());
 
@@ -34,12 +33,11 @@ app.use(helmet());
 app.use(cors({ origin: "http://localhost:5173" }));
 
 dotenv.config();
-
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-app.use("/auth", authRoutes);
+app.use("/auth", authLimiter, authRoutes);
 app.use("/user", profileRoutes);
 app.use("/movie", movieRoutes);
 app.use("/seats", seatsRoutes);
