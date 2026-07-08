@@ -9,6 +9,24 @@ const showtimesRoutes = require("./src/routes/showtimes_routes");
 const ticketsRoutes = require("./src/routes/tickets_routes");
 const cors = require("cors");
 const helmet = require("helmet");
+const rateLimit = require("express-rate-limit");
+
+const globalLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 100,
+  statusCode: 429,
+  message: { message: "Too many requests, please try again later." },
+});
+
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 5,
+  statusCode: 429,
+  message: { message: "Too many requests, please try again later." },
+});
+
+app.use(globalLimiter);
+app.use("/auth", authLimiter, authRoutes);
 
 app.use(express.json());
 
