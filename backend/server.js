@@ -7,8 +7,13 @@ const movieRoutes = require("./src/routes/movie_routes");
 const seatsRoutes = require("./src/routes/seats_routes");
 const showtimesRoutes = require("./src/routes/showtimes_routes");
 const ticketsRoutes = require("./src/routes/tickets_routes");
+const cors = require("cors");
+const helmet = require("helmet");
 
 app.use(express.json());
+
+app.use(helmet());
+app.use(cors({ origin: "http://localhost:5173" }));
 
 dotenv.config();
 
