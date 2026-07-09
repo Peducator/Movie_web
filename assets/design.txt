@@ -1,0 +1,34 @@
+/src
+  /app
+    layout.js                        ← Header + Footer (wrap toàn bộ)
+    page.js                          ← Home page
+    
+    /movies
+      page.js                        ← danh sách phim (getallmovie)
+      /[id]
+        page.js                      ← thông tin phim + danh sách suất chiếu (getMovieById + getShowtimeByMovie)
+    
+    /showtimes
+      /[showtimeId]
+        page.js                      ← sơ đồ ghế (getSeatsByShowtime)
+    
+    /tickets
+      page.js                        ← tạo transaction (bookTicket)
+      /my-tickets
+        page.js                      ← lịch sử vé của user
+    
+    /auth
+      layout.js                      ← layout trống, không có Header + Footer
+      /login
+        page.js                      ← form login, redirect về home sau khi xong
+      /register
+        page.js                      ← form register, redirect về login sau khi xong
+    
+    /user
+      /profile
+        page.js                      ← thông tin user + nút redirect tới /tickets/my-tickets
+  
+    /components
+    Header.js   ← nếu chưa login: hiện Login, Register, Google OAuth logo
+                ← nếu đã login: hiện tên user + nút Logout
+    Footer.js
