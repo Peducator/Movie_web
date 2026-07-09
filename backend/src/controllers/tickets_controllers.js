@@ -4,37 +4,46 @@ const prisma = new PrismaClient();
 const bookTicket = async (req, res) => {
   try {
     const userId = req.user.id;
-    const { showtime_id, seat_id, transaction_amount } = req.body;
+    const { showtime_id, seat_ids, transaction_amount } = req.body;
 
-    if (!showtime_id || !seat_id || transaction_amount == null) {
-      return res.status(400).json({ message: "Vui lòng cung cấp showtime_id, seat_id và transaction_amount." });
+    // 1. Validate đầu vào
+    if (!showtime_id || !Array.isArray(seat_ids) || seat_ids.length === 0 || transaction_amount == null) {
+      return res.status(400).json({ message: "Vui lòng cung cấp showtime_id, seat_ids (mảng) và transaction_amount." });
     }
 
-    const showtime = await prisma.showtime.findUnique({ where: { showtime_id: parseInt(showtime_id, 10) } });
+    const parsedShowtimeId = parseInt(showtime_id, 10);
+    const parsedSeatIds = seat_ids.map((id) => parseInt(id, 10));
+
+    // 2. Kiểm tra showtime tồn tại
+    const showtime = await prisma.showtime.findUnique({ where: { showtime_id: parsedShowtimeId } });
     if (!showtime) {
       return res.status(404).json({ message: "Lịch chiếu không tồn tại." });
     }
 
-    const seat = await prisma.seat.findUnique({ where: { seat_id: parseInt(seat_id, 10) } });
-    if (!seat) {
-      return res.status(404).json({ message: "Ghế không tồn tại." });
+    // 3. Kiểm tra tất cả seat tồn tại và thuộc đúng phòng
+    const seats = await prisma.seat.findMany({ where: { seat_id: { in: parsedSeatIds } } });
+    if (seats.length !== parsedSeatIds.length) {
+      return res.status(404).json({ message: "Một hoặc nhiều ghế không tồn tại." });
+    }
+    const wrongRoom = seats.some((seat) => seat.room_id !== showtime.room_id);
+    if (wrongRoom) {
+      return res.status(400).json({ message: "Một hoặc nhiều ghế không thuộc phòng chiếu này." });
     }
 
-    if (seat.room_id !== showtime.room_id) {
-      return res.status(400).json({ message: "Ghế không thuộc phòng chiếu của lịch chiếu này." });
-    }
-
-    const existingTicket = await prisma.ticket.findFirst({
+    // 4. Kiểm tra ghế đã bị đặt chưa
+    const existingTickets = await prisma.ticket.findMany({
       where: {
-        showtime_id: parseInt(showtime_id, 10),
-        seat_id: parseInt(seat_id, 10),
+        showtime_id: parsedShowtimeId,
+        seat_id: { in: parsedSeatIds },
         ticket_status: { not: "CANCELED" },
       },
     });
-    if (existingTicket) {
-      return res.status(409).json({ message: "Ghế đã được đặt cho lịch chiếu này." });
+    if (existingTickets.length > 0) {
+      const takenSeatIds = existingTickets.map((t) => t.seat_id);
+      return res.status(409).json({ message: "Một hoặc nhiều ghế đã được đặt.", taken_seats: takenSeatIds });
     }
 
+    // 5. Tạo transaction + nhiều ticket trong cùng 1 atomic transaction
     const result = await prisma.$transaction(async (tx) => {
       const transaction = await tx.transaction.create({
         data: {
@@ -42,16 +51,22 @@ const bookTicket = async (req, res) => {
           transaction_status: "COMPLETED",
         },
       });
-      const ticket = await tx.ticket.create({
-        data: {
-          user_id: userId,
-          showtime_id: parseInt(showtime_id, 10),
-          seat_id: parseInt(seat_id, 10),
-          transaction_id: transaction.transaction_id,
-          ticket_status: "BOOKED",
-        },
-      });
-      return { transaction, ticket };
+
+      const tickets = await Promise.all(
+        parsedSeatIds.map((seatId) =>
+          tx.ticket.create({
+            data: {
+              user_id: userId,
+              showtime_id: parsedShowtimeId,
+              seat_id: seatId,
+              transaction_id: transaction.transaction_id,
+              ticket_status: "BOOKED",
+            },
+          })
+        )
+      );
+
+      return { transaction, tickets };
     });
 
     return res.status(201).json({ message: "Đặt vé thành công.", ...result });

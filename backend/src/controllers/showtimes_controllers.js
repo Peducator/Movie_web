@@ -14,7 +14,11 @@ const getShowtimesByMovie = async (req, res) => {
         room: true,
         movie: true,
       },
-      orderBy: { date: "asc" },
+      orderBy: [
+        { date: "asc" },
+        { start_time: "asc" },
+        { end_time: "asc" },
+      ],
     });
 
     return res.status(200).json(showtimes);
