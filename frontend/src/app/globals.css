@@ -47,3 +47,14 @@ a {
     color-scheme: dark;
   }
 }
+.dark-input input,
+.dark-input .ant-input-password input {
+  color: #fff !important;
+}
+.dark-input .ant-input-prefix,
+.dark-input .ant-input-suffix {
+  color: rgba(255,255,255,0.4) !important;
+}
+::placeholder {
+  color: rgba(255,255,255,0.3) !important;
+}
