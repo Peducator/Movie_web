@@ -7,8 +7,30 @@ const { Title, Text } = Typography
 export default function RegisterPage() {
   const router = useRouter()
 
-  const onFinish = (values) => {
-    console.log(values)
+  const onFinish = async (values) => {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: values.email,
+          username: values.username,
+          password: values.password,
+          phonenumber: values.phonenumber,
+          age: parseInt(values.age),
+          gender: values.gender,
+        }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        console.error(data.message)
+        return
+      }
+      console.log('Register success:', data)
+      router.push('/auth/login')
+    } catch (error) {
+      console.error('Lỗi:', error)
+    }
   }
 
   return (
@@ -48,7 +70,7 @@ export default function RegisterPage() {
         >
           <Form layout="vertical" onFinish={onFinish} requiredMark={false}>
             <Form.Item
-              name="name"
+              name="username"
               rules={[{ required: true, message: 'Nhập họ tên của bạn' }]}
             >
               <Input
@@ -97,11 +119,20 @@ export default function RegisterPage() {
                 size="large"
                 style={{ width: '100%' }}
                 options={[
-                  { value: 'male', label: 'Nam' },
-                  { value: 'female', label: 'Nữ' },
-                  { value: 'other', label: 'Khác' },
+                  { value: 'male', label: 'Male' },
+                  { value: 'female', label: 'Female' },
+                  { value: 'other', label: 'Other' },
                 ]}
               />
+            </Form.Item>
+            <Form.Item
+              name="phonenumber"
+              rules={[
+                { required: true, message: 'Nhập số điện thoại' },
+                { pattern: /^[0-9]{10}$/, message: 'Số điện thoại không hợp lệ' },
+              ]}
+            >
+              <Input size="large" placeholder="Số điện thoại" />
             </Form.Item>
 
             <Form.Item

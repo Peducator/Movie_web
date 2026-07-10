@@ -7,11 +7,30 @@ const { Title, Text } = Typography
 export default function LoginPage() {
   const router = useRouter()
 
-  const onFinish = (values) => {
-    console.log(values)
-    // gọi API login sau
-  }
+    const onFinish = async (values) => {
+        try {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                email: values.email,
+                password: values.password,
+            }),
+            })
 
+            const data = await res.json()
+
+            if (!res.ok) {
+            console.error(data.message)
+            return
+            }
+
+            console.log('Login success:', data)
+            // router.push('/') sau
+        } catch (error) {
+            console.error('Lỗi:', error)
+        }
+    }
   return (
     <div style={{
       minHeight: '100vh',
