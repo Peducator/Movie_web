@@ -11,35 +11,40 @@ const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
 
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  statusCode: 429,
-  message: { message: "Too many requests, please try again later." },
-});
+// const globalLimiter = rateLimit({
+//   windowMs: 1 * 60 * 1000,
+//   max: 20,
+//   statusCode: 429,
+//   message: { message: "Too many requests, please try again later." },
+// });
 
-const authLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 5,
-  statusCode: 429,
-  message: { message: "Too many requests, please try again later." },
-});
+// const authLimiter = rateLimit({
+//   windowMs: 1 * 60 * 1000,
+//   max: 20,
+//   statusCode: 429,
+//   message: { message: "Too many requests, please try again later." },
+// });
 
-app.use(globalLimiter);
+// app.use(globalLimiter);
 
 app.use(express.json());
 
 app.use(helmet());
-app.use(cors({ origin: "http://localhost:3000" }));
+app.use(cors({
+  origin: 'http://localhost:3000',
+  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  credentials: true
+}))
 
 dotenv.config();
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
 
-app.use("/auth", authLimiter, authRoutes);
+// app.use("/auth", authLimiter, authRoutes);
+app.use("/auth", authRoutes);
 app.use("/user", profileRoutes);
-app.use("/movie", movieRoutes);
+app.use("/home", movieRoutes);
 app.use("/seats", seatsRoutes);
 app.use("/showtimes", showtimesRoutes);
 app.use("/tickets", ticketsRoutes);

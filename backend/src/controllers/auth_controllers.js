@@ -73,7 +73,7 @@ const register = async (req, res) => {
         user_name: username,
         user_password: hashedPassword,
         user_phone: phonenumber,
-        age,
+        age: parseInt(age),
         gender
       }
     });

@@ -16,7 +16,7 @@ model User {
   age           Int?
   gender        String?
   role          String    @default("user")
-  refresh_token String?
+  refresh_token String?   @db.Text
   tickets       Ticket[]
   @@map("users")
 }
