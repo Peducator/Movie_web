@@ -10,6 +10,7 @@ const ticketsRoutes = require("./src/routes/tickets_routes");
 const cors = require("cors");
 const helmet = require("helmet");
 const rateLimit = require("express-rate-limit");
+const cookieParser = require('cookie-parser')
 
 // const globalLimiter = rateLimit({
 //   windowMs: 1 * 60 * 1000,
@@ -29,10 +30,12 @@ const rateLimit = require("express-rate-limit");
 
 app.use(express.json());
 
+app.use(cookieParser());
+
 app.use(helmet());
 app.use(cors({
   origin: 'http://localhost:3000',
-  methods: ['GET', 'POST', 'PUT', 'DELETE'],
+  methods: ['GET', 'POST', 'PUT', 'DELETE' , 'PATCH'],
   credentials: true
 }))
 
@@ -43,11 +46,12 @@ app.get("/", (req, res) => {
 
 // app.use("/auth", authLimiter, authRoutes);
 app.use("/auth", authRoutes);
-app.use("/user", profileRoutes);
+app.use("/users", profileRoutes);
 app.use("/home", movieRoutes);
 app.use("/seats", seatsRoutes);
 app.use("/showtimes", showtimesRoutes);
 app.use("/tickets", ticketsRoutes);
+app.use("/transactions", require("./src/routes/transaction_routes"));
 
 app.listen(4000, () => {
   console.log("Server is running on port 4000");
