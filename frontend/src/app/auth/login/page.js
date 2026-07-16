@@ -11,6 +11,7 @@ export default function LoginPage() {
         try {
             const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
             method: 'POST',
+            credentials: 'include',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
                 email: values.email,
@@ -19,14 +20,11 @@ export default function LoginPage() {
             })
 
             const data = await res.json()
-
             if (!res.ok) {
             console.error(data.message)
             return
             }
-
-            console.log('Login success:', data)
-            // router.push('/') sau
+            router.push('/home')
         } catch (error) {
             console.error('Lỗi:', error)
         }

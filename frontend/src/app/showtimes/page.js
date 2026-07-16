@@ -1,37 +1,33 @@
-// app/showtimes/[movie_id]/page.jsx
+// app/showtimes/page.jsx
 "use client"
 
 import { useState, useEffect } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { usePathname } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import fetchWithAuth from '@/lib/fetchWithAuth'
 
 const NAV_ITEMS = [
-  { icon: '⊞', label: 'Tất cả phim', key: 'movies' , path: '/home'},
+  { icon: '⊞', label: 'Tất cả phim', key: 'movies', path: '/home' },
   { icon: '🕐', label: 'Lịch chiếu', key: 'showtimes', path: '/showtimes' },
 ]
 
-export default function ShowtimePage() {
-  const pathname = usePathname();
-  const { movie_id } = useParams()
+export default function AllShowtimesPage() {
+  const pathname = usePathname()
   const router = useRouter()
   const [showtimes, setShowtimes] = useState([])
-  const [movie, setMovie] = useState(null)
+  const [search, setSearch] = useState('')
 
-useEffect(() => {
-  fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/home/movies/${movie_id}`)
-    .then(r => r.json())
-    .then(setMovie)
-    .catch(err => console.error(err))
+  useEffect(() => {
+    fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/showtimes/movies/getAll`)
+      .then(r => r.json())
+      .then(data => {
+        setShowtimes(data)
+      })
+      .catch(err => console.error(err))
+  }, [])
 
-  fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/showtimes/movies/${movie_id}`)
-    .then(r => r.json())
-    .then(data => {
-      console.log('showtimes:', data)
-      setShowtimes(data)
-    })
-    .catch(err => console.error(err))
-}, [movie_id])
+  const filtered = showtimes.filter(st =>
+    st.movie?.movie_name.toLowerCase().includes(search.toLowerCase())
+  )
 
   return (
     <div style={{ display: 'flex', height: '100vh', background: '#1a1a1a', overflow: 'hidden' }}>
@@ -70,7 +66,9 @@ useEffect(() => {
 
         <div style={{ flex: 1 }} />
 
-        <div style={{
+        <div
+        onClick={() => router.push('/user/profiles')} 
+        style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '8px 12px', borderRadius: 8,
           color: 'rgba(255,255,255,0.5)', fontSize: 16, cursor: 'pointer',
@@ -82,35 +80,32 @@ useEffect(() => {
       {/* Main */}
       <div style={{ flex: 1, padding: '1.5rem', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
 
-        {/* Back + Movie info */}
-        <div style={{ marginBottom: 20, flexShrink: 0 }}>
-          <span
-            onClick={() => router.back()}
-            style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, cursor: 'pointer', marginBottom: 12, display: 'inline-block' }}
-          >
-            ← Quay lại
-          </span>
-          {movie && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
-              <span style={{ color: '#fff', fontSize: 20, fontWeight: 500 }}>{movie.movie_name}</span>
-              <span style={{ fontSize: 13, background: 'rgba(64,150,255,0.2)', color: '#4096ff', padding: '2px 8px', borderRadius: 20 }}>
-                {movie.movie_genre}
-              </span>
-              <span style={{ fontSize: 13, color: 'rgba(255,255,255,0.4)' }}>{movie.movie_duration}p</span>
-            </div>
-          )}
+        {/* Header */}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 20, flexShrink: 0 }}>
+          <span style={{ color: '#fff', fontSize: 20, fontWeight: 500 }}>Lịch chiếu</span>
+          <input
+            value={search}
+            onChange={e => {
+                setSearch(e.target.value)
+                }}
+            placeholder="Tìm kiếm phim..."
+            style={{
+              background: 'rgba(255,255,255,0.08)',
+              border: '0.5px solid rgba(255,255,255,0.15)',
+              borderRadius: 8, padding: '7px 14px',
+              color: '#fff', fontSize: 13, width: 180, outline: 'none',
+            }}
+          />
         </div>
 
-        {/* Showtime list */}
         <div style={{ overflowY: 'auto', flex: 1, paddingRight: 4 }}>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            {showtimes.map(st => {
-              return (
-                <div
-                  key={st.showtime_id}
-                  onClick={() => router.push(`/showtimes/${st.showtime_id}`)}
-                  style={{
-                    background: 'rgba(255,255,255,0.07)',
+            {filtered.map(st => (
+              <div
+                key={st.showtime_id}
+                onClick={() => router.push(`/showtimes/${st.showtime_id}`)}
+                style={{
+                  background: 'rgba(255,255,255,0.07)',
                   border: '0.5px solid rgba(255,255,255,0.12)',
                   borderRadius: 12, padding: '16px 20px',
                   cursor: 'pointer', transition: 'background 0.15s',
@@ -121,10 +116,13 @@ useEffect(() => {
               >
                 <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
                   <span style={{ color: '#fff', fontSize: 16, fontWeight: 500 }}>
-                    {new Date(st.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })} - {new Date(st.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    {st.movie?.movie_name}
                   </span>
                   <span style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
-                    {new Date(st.start_time).toLocaleDateString('vi-VN')}
+                    {new Date(st.start_time).toLocaleDateString('vi-VN')} &nbsp;
+                    {new Date(st.start_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
+                    {' - '}
+                    {new Date(st.end_time).toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' })}
                   </span>
                 </div>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
@@ -134,7 +132,7 @@ useEffect(() => {
                   <span style={{ color: '#4096ff', fontSize: 13 }}>Chọn ghế →</span>
                 </div>
               </div>
-            )})}
+            ))}
           </div>
         </div>
       </div>

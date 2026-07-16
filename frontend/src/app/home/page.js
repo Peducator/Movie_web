@@ -1,26 +1,25 @@
 // pages/movies.jsx
-"use client"
+'use client'
 
 import { useState , useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation';
+import fetchWithAuth from '@/lib/fetchWithAuth'
 
 
 const NAV_ITEMS = [
-  { icon: '⊞', label: 'Tất cả phim', key: 'movies' },
-  { icon: '🕐', label: 'Lịch chiếu', key: 'showtimes' },
-  { icon: '🎟', label: 'Đặt vé', key: 'tickets' },
+  { icon: '⊞', label: 'Tất cả phim', key: 'movies' , path: '/home'},
+  { icon: '🕐', label: 'Lịch chiếu', key: 'showtimes', path: '/showtimes' },
 ]
 
 export default function MoviesPage() {
   const router = useRouter()
-  const [activeNav, setActiveNav] = useState('movies')
+  const pathname = usePathname();
   const [movies, setMovies] = useState([])
   const [search, setSearch] = useState('')
   const [loading, setLoading] = useState(false)
     
 useEffect(() => {
-  setLoading(true)
-  fetch(`${process.env.NEXT_PUBLIC_API_URL}/home/movies`)
+  fetchWithAuth(`${process.env.NEXT_PUBLIC_API_URL}/home/movies`)
     .then(r => r.json())
     .then(data => {
       setMovies(data)
@@ -56,12 +55,12 @@ useEffect(() => {
         {NAV_ITEMS.map(item => (
           <div
             key={item.key}
-            onClick={() => setActiveNav(item.key)}
+            onClick={() => router.push(item.path)}
             style={{
               display: 'flex', alignItems: 'center', gap: 10,
               padding: '8px 12px', borderRadius: 8,
-              color: activeNav === item.key ? '#4096ff' : 'rgba(255,255,255,0.5)',
-              background: activeNav === item.key ? 'rgba(64,150,255,0.15)' : 'transparent',
+              color: pathname.startsWith(item.path) ? '#4096ff' : 'rgba(255,255,255,0.5)',
+              background: pathname.startsWith(item.path) ? 'rgba(64,150,255,0.15)' : 'transparent',
               fontSize: 16, cursor: 'pointer',
               transition: 'all 0.15s',
             }}
@@ -73,7 +72,9 @@ useEffect(() => {
 
         <div style={{ flex: 1 }} />
 
-        <div style={{
+        <div 
+        onClick={() => router.push('/user/profiles')}
+        style={{
           display: 'flex', alignItems: 'center', gap: 10,
           padding: '8px 12px', borderRadius: 8,
           color: 'rgba(255,255,255,0.5)', fontSize: 16, cursor: 'pointer',

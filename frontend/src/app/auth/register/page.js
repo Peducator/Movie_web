@@ -11,6 +11,7 @@ export default function RegisterPage() {
     try {
       const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/register`, {
         method: 'POST',
+        credentials: 'include',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           email: values.email,
@@ -26,7 +27,6 @@ export default function RegisterPage() {
         console.error(data.message)
         return
       }
-      console.log('Register success:', data)
       router.push('/auth/login')
     } catch (error) {
       console.error('Lỗi:', error)
