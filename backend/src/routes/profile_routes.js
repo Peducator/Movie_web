@@ -1,8 +1,8 @@
 const router = require("express").Router();
 const {getProfile, updateProfile} = require("../controllers/profile_controllers");
-const { accessToken } = require("../middlewares/auth_middlewares");
+const { verifyToken } = require("../middlewares/auth_middlewares");
 
-router.get("/profile", accessToken, getProfile);
-router.put("/profile", accessToken, updateProfile);
+router.get("/profiles", verifyToken, getProfile);
+router.put("/profiles", verifyToken, updateProfile);
 
 module.exports = router;
