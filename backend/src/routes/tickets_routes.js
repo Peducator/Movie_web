@@ -1,9 +1,9 @@
 const router = require("express").Router();
 const { bookTicket, cancelTicket, getUserTickets } = require("../controllers/tickets_controllers");
-const { accessToken } = require("../middlewares/auth_middlewares");
+const { verifyToken } = require("../middlewares/auth_middlewares");
 
-router.post("/", accessToken, bookTicket);
-router.delete("/:id", accessToken, cancelTicket);
-router.get("/my-tickets", accessToken, getUserTickets);
+router.post("/", verifyToken, bookTicket);
+router.get("/my-tickets", verifyToken, getUserTickets);
+router.patch("/:transaction_id/cancel", verifyToken, cancelTicket);
 
 module.exports = router;
