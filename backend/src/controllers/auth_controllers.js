@@ -36,15 +36,27 @@ const login = async (req, res) => {
       data: { refresh_token: refreshToken }
     });
 
+    // Set cookie thay vì trả trong body
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000 // 15 phút
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+    });
+
     return res.status(200).json({
       message: "Đăng nhập thành công!",
-      accessToken,
       user: {
         id: user.user_id,
         email: user.user_email,
         username: user.user_name,
-        jwt: accessToken,
-        refreshToken: refreshToken
       }
     });
 
@@ -92,34 +104,74 @@ const register = async (req, res) => {
     return res.status(500).json({ message: "Lỗi server." });
   }
 };
+const cookieOptions = {
+  httpOnly: true,
+  secure: false,
+  sameSite: 'lax',
+};
 
 const logout = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+    
     await prisma.user.update({
       where: { user_id: decoded.id },
       data: { refresh_token: null }
     });
+
+    // Xóa cả 2 cookie
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
+
     return res.status(200).json({ message: "Logout successful" });
   } catch (error) {
-    return res.status(401).json({ message: "Unauthorized" });
+    // Dù token lỗi vẫn xóa cookie
+    res.clearCookie('accessToken', cookieOptions);
+    res.clearCookie('refreshToken', cookieOptions);
+    return res.status(200).json({ message: "Logout successful" });
   }
 };
 
+
 const authRefreshToken = async (req, res) => {
   try {
-    const { refreshToken } = req.body;
+    const refreshToken = req.cookies?.refreshToken;
+
+    if (!refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const decoded = jwt.verify(refreshToken, process.env.JWT_REFRESH_SECRET);
+
     const user = await prisma.user.findUnique({
       where: { user_id: decoded.id }
     });
+
+    if (!user || user.refresh_token !== refreshToken) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
     const newAccessToken = jwt.sign(
       { id: user.user_id, email: user.user_email },
       process.env.JWT_SECRET,
       { expiresIn: "15m" }
     );
-    return res.status(200).json({ accessToken: newAccessToken });
+
+    res.cookie('accessToken', newAccessToken, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      maxAge: 15 * 60 * 1000
+    });
+
+    return res.status(200).json({ message: "Token refreshed" });
+
   } catch (error) {
     return res.status(401).json({ message: "Unauthorized" });
   }
@@ -136,13 +188,25 @@ const googleCallback = async (req, res) => {
     process.env.JWT_REFRESH_SECRET,
     { expiresIn: "7d" }
   );
+    res.cookie('accessToken', accessToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 15 * 60 * 1000 // 15 phút
+    });
+
+    res.cookie('refreshToken', refreshToken, {
+      httpOnly: true,
+      secure: false,
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000 // 7 ngày
+    });
 
   await prisma.user.update({
     where: { user_id: req.user.user_id },
     data: { refresh_token: refreshToken },
   });
-
-  return res.status(200).json({ accessToken, refreshToken });
+  return res.redirect(`${process.env.CLIENT_URL}/home`);
 };
 
 module.exports = { login, register, logout, authRefreshToken, googleCallback };
