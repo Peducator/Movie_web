@@ -9,13 +9,12 @@ const getShowtimesByMovie = async (req, res) => {
     }
 
     const showtimes = await prisma.showtime.findMany({
-      where: { movie_id: movieId },
+      where: { movie_id: movieId , start_time: { gte: new Date() } },
       include: {
         room: true,
         movie: true,
       },
       orderBy: [
-        { date: "asc" },
         { start_time: "asc" },
         { end_time: "asc" },
       ],
@@ -85,4 +84,23 @@ const deleteShowtime = async (req, res) => {
   }
 };
 
-module.exports = { getShowtimesByMovie, createShowtime, deleteShowtime };
+const getAllShowtimes = async (req, res) => {
+  try {
+    const showtimes = await prisma.Showtime.findMany({
+      where: {
+        start_time: { gte: new Date() }
+      },
+      include: { room: true, movie: true },
+      orderBy: [
+        { start_time: 'asc' },
+        { end_time: 'asc' },
+      ],
+    });
+
+    return res.status(200).json(showtimes);
+  } catch (error) {
+    return res.status(500).json({ message: "Lỗi server.", error: error.message });
+  }
+}
+
+module.exports = { getShowtimesByMovie, createShowtime, deleteShowtime, getAllShowtimes };
