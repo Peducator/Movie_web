@@ -8,16 +8,17 @@ datasource db {
 }
 
 model User {
-  user_id       Int       @id @default(autoincrement())
-  user_name     String
-  user_password String
-  user_email    String    @unique
-  user_phone    String?
-  age           Int?
-  gender        String?
-  role          String    @default("user")
-  refresh_token String?   @db.Text
-  tickets       Ticket[]
+  user_id        Int       @id @default(autoincrement())
+  user_name      String
+  user_password  String
+  user_email     String    @unique
+  user_phone     String?
+  age            Int?
+  gender         String?
+  role           String    @default("user")
+  refresh_token  String?   @db.Text
+  cooldown_until DateTime?
+  tickets        Ticket[]
   @@map("users")
 }
 
@@ -58,13 +59,11 @@ model Showtime {
   showtime_id Int      @id @default(autoincrement())
   room_id     Int
   movie_id    Int
-  start_time  String
-  end_time    String
-  date        DateTime
+  start_time  DateTime
+  end_time    DateTime
   room        Room     @relation(fields: [room_id], references: [room_id])
   movie       Movie    @relation(fields: [movie_id], references: [movie_id])
   tickets     Ticket[]
-
   @@map("showtimes")
 }
 
