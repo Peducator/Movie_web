@@ -1,5 +1,6 @@
 'use client'
 
+import { Suspense } from 'react'
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { Button, Divider, Modal, Result, Spin, Steps, Tag, Typography } from 'antd'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -49,7 +50,7 @@ function normalizeOrder(data) {
   }
 }
 
-export default function PaymentPage() {
+function PaymentPage() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const transactionId = searchParams.get('transaction_id')
@@ -66,10 +67,7 @@ export default function PaymentPage() {
   const total = order?.seats?.reduce((sum, seat) => sum + Number(seat?.price || 0), 0) ?? 0
 
   const cancelTransaction = useCallback(async () => {
-    if (!transactionId) {
-      return
-    }
-
+    if (!transactionId) return
     await fetchWithAuth(`${API_BASE_URL}/transactions/${transactionId}/cancel`, {
       method: 'PATCH',
       credentials: 'include',
@@ -86,14 +84,11 @@ export default function PaymentPage() {
       setStatus('failed')
       return
     }
-
     setStatus('checking')
-
     try {
       const response = await fetchWithAuth(`${API_BASE_URL}/transactions/${transactionId}/complete`, {
         method: 'PATCH',
       })
-
       setStatus(response.ok ? 'success' : 'failed')
     } catch {
       setStatus('failed')
@@ -111,18 +106,12 @@ export default function PaymentPage() {
         setLoading(false)
         return
       }
-
       setLoading(true)
       setError('')
-
       try {
         const response = await fetchWithAuth(`${API_BASE_URL}/transactions/${transactionId}`)
         const data = await response.json()
-
-        if (!response.ok) {
-          throw new Error(data?.message || 'Không thể tải đơn hàng.')
-        }
-
+        if (!response.ok) throw new Error(data?.message || 'Không thể tải đơn hàng.')
         setOrder(normalizeOrder(data))
       } catch (fetchError) {
         setError(fetchError?.message || 'Có lỗi xảy ra khi tải đơn hàng.')
@@ -131,30 +120,22 @@ export default function PaymentPage() {
         setLoading(false)
       }
     }
-
     fetchOrder()
   }, [transactionId])
 
   useEffect(() => {
     if (typeof window === 'undefined') return undefined
-
     window.history.pushState(null, '', window.location.href)
-
     const handlePopState = () => {
       window.history.pushState(null, '', window.location.href)
       setShowConfirm(true)
     }
-
     const handleBeforeUnload = (event) => {
-      // Chỉ block, không cancel hay redirect được ở đây
-      // Browser tự handle, không can thiệp được
       event.preventDefault()
       event.returnValue = ''
     }
-
     window.addEventListener('popstate', handlePopState)
     window.addEventListener('beforeunload', handleBeforeUnload)
-
     return () => {
       window.removeEventListener('popstate', handlePopState)
       window.removeEventListener('beforeunload', handleBeforeUnload)
@@ -162,10 +143,7 @@ export default function PaymentPage() {
   }, [])
 
   useEffect(() => {
-    if (status !== 'pending') {
-      return undefined
-    }
-
+    if (status !== 'pending') return undefined
     if (countdown <= 0) {
       if (!expiryHandledRef.current) {
         expiryHandledRef.current = true
@@ -173,11 +151,9 @@ export default function PaymentPage() {
       }
       return undefined
     }
-
     const timerId = window.setTimeout(() => {
       setCountdown((current) => Math.max(current - 1, 0))
     }, 1000)
-
     return () => window.clearTimeout(timerId)
   }, [cancelTransaction, countdown, status])
 
@@ -197,12 +173,8 @@ export default function PaymentPage() {
           title="Không tải được đơn thanh toán"
           subTitle={error}
           extra={[
-            <Button key="home" type="primary" onClick={() => router.push('/home')}>
-              Về trang chủ
-            </Button>,
-            <Button key="back" onClick={() => router.back()}>
-              Quay lại
-            </Button>,
+            <Button key="home" type="primary" onClick={() => router.push('/home')}>Về trang chủ</Button>,
+            <Button key="back" onClick={() => router.back()}>Quay lại</Button>,
           ]}
         />
       </div>
@@ -217,9 +189,7 @@ export default function PaymentPage() {
       <div className="tickets-shell">
         <header className="tickets-header">
           {status !== 'success' && (
-            <Text className="tickets-backLink" onClick={() => setShowConfirm(true)}>
-              ← Quay lại
-            </Text>
+            <Text className="tickets-backLink" onClick={() => setShowConfirm(true)}>← Quay lại</Text>
           )}
           <Title level={3} className="tickets-title">
             Cine<span className="tickets-titleAccent">Max</span> — Thanh toán
@@ -239,60 +209,28 @@ export default function PaymentPage() {
         <div className="tickets-layout">
           <section className="tickets-paymentCard">
             {status === 'success' ? (
-              <PaymentState
-                tone="success"
-                icon="✓"
-                title="Thanh toán thành công!"
-                description="Vé của bạn đã được xác nhận. Kiểm tra email để nhận vé."
-                action={
-                  <Button type="primary" block className="tickets-primaryButton" onClick={() => router.push('/home')}>
-                    Về trang chủ
-                  </Button>
-                }
+              <PaymentState tone="success" icon="✓" title="Thanh toán thành công!" description="Vé của bạn đã được xác nhận. Kiểm tra email để nhận vé."
+                action={<Button type="primary" block className="tickets-primaryButton" onClick={() => router.push('/home')}>Về trang chủ</Button>}
               />
             ) : isExpired ? (
-              <PaymentState
-                tone="danger"
-                icon="✕"
-                title="Hết thời gian!"
-                description="Phiên thanh toán đã hết hạn. Vui lòng chọn ghế lại."
-                action={
-                  <Button block className="tickets-secondaryButton" onClick={() => router.back()}>
-                    Chọn lại ghế
-                  </Button>
-                }
+              <PaymentState tone="danger" icon="✕" title="Hết thời gian!" description="Phiên thanh toán đã hết hạn. Vui lòng chọn ghế lại."
+                action={<Button block className="tickets-secondaryButton" onClick={() => router.back()}>Chọn lại ghế</Button>}
               />
             ) : (
               <>
                 <Text className="tickets-helperText">Quét mã QR để thanh toán</Text>
-
                 <div className="tickets-qrFrame">
                   <img src={QR_PLACEHOLDER} width={200} height={200} alt="QR code" className="tickets-qrImage" />
                   {status === 'checking' && (
-                    <div className="tickets-qrOverlay">
-                      <Spin size="large" />
-                    </div>
+                    <div className="tickets-qrOverlay"><Spin size="large" /></div>
                   )}
                 </div>
-
                 <div className={countdown < 60 ? 'tickets-countdown tickets-countdown--warning' : 'tickets-countdown'}>
-                  <Text className={countdown < 60 ? 'tickets-countdownLabel tickets-countdownLabel--warning' : 'tickets-countdownLabel'}>
-                    Hết hạn sau
-                  </Text>
-                  <Text className={countdown < 60 ? 'tickets-countdownValue tickets-countdownValue--warning' : 'tickets-countdownValue'}>
-                    {formatCountdown(countdown)}
-                  </Text>
+                  <Text className={countdown < 60 ? 'tickets-countdownLabel tickets-countdownLabel--warning' : 'tickets-countdownLabel'}>Hết hạn sau</Text>
+                  <Text className={countdown < 60 ? 'tickets-countdownValue tickets-countdownValue--warning' : 'tickets-countdownValue'}>{formatCountdown(countdown)}</Text>
                 </div>
-
                 <Text className="tickets-subtleText">Mở app ngân hàng → Quét QR → Thanh toán</Text>
-
-                <Button
-                  type="primary"
-                  block
-                  loading={status === 'checking'}
-                  className="tickets-primaryButton"
-                  onClick={handleCheckPayment}
-                >
+                <Button type="primary" block loading={status === 'checking'} className="tickets-primaryButton" onClick={handleCheckPayment}>
                   Tôi đã thanh toán xong
                 </Button>
               </>
@@ -301,41 +239,31 @@ export default function PaymentPage() {
 
           <section className="tickets-summaryCard">
             <Text className="tickets-sectionLabel">Chi tiết đơn hàng</Text>
-
             <div className="tickets-summaryRows">
               <Row label="Phim" value={order.movie_name} highlight />
               <Row label="Ngày" value={order.showtime_date} />
               <Row label="Suất chiếu" value={order.showtime_time} />
               <Row label="Phòng" value={order.room_name} />
             </div>
-
             <Divider className="tickets-divider" />
-
             <Text className="tickets-sectionSubLabel">Ghế đã chọn</Text>
-
             <div className="tickets-seatList">
               {order.seats.map((seat) => (
                 <div key={seat.seat_id} className="tickets-seatRow">
                   <div className="tickets-seatMeta">
-                    <Tag color="blue" className="tickets-seatTag">
-                      {seat.seat_code}
-                    </Tag>
+                    <Tag color="blue" className="tickets-seatTag">{seat.seat_code}</Tag>
                     <Text className="tickets-seatType">{SEAT_TYPE_LABEL[seat.seat_type] || 'Seat'}</Text>
                   </div>
                   <Text className="tickets-seatPrice">{formatCurrency(seat.price)}</Text>
                 </div>
               ))}
             </div>
-
             <Divider className="tickets-divider" />
-
             <div className="tickets-totalRow">
               <Text className="tickets-totalLabel">Tổng cộng</Text>
               <Text className="tickets-totalValue">{formatCurrency(total)}</Text>
             </div>
-
             <Divider className="tickets-divider" />
-
             <Row label="Mã giao dịch" value={order.transaction_id} mono />
           </section>
         </div>
@@ -345,9 +273,7 @@ export default function PaymentPage() {
         <div className="tickets-modalBody">
           <Text className="tickets-modalText">Bạn có chắc muốn hủy thanh toán không?</Text>
           <div className="tickets-modalActions">
-            <Button danger onClick={handleCancelPayment}>
-              Hủy thanh toán
-            </Button>
+            <Button danger onClick={handleCancelPayment}>Hủy thanh toán</Button>
             <Button onClick={handleContinue}>Tiếp tục thanh toán</Button>
           </div>
         </div>
@@ -358,7 +284,6 @@ export default function PaymentPage() {
 
 function PaymentState({ tone, icon, title, description, action }) {
   const isSuccess = tone === 'success'
-
   return (
     <div className="tickets-stateWrap">
       <div className={isSuccess ? 'tickets-stateIcon tickets-stateIcon--success' : 'tickets-stateIcon tickets-stateIcon--danger'}>{icon}</div>
@@ -377,5 +302,13 @@ function Row({ label, value, highlight = false, mono = false }) {
         {value}
       </Text>
     </div>
+  )
+}
+
+export default function TicketsPage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <PaymentPage />
+    </Suspense>
   )
 }
