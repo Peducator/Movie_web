@@ -3,5 +3,4 @@ node_modules
 .gitignore
 *.log
 .env
-package-lock.json
 README.md

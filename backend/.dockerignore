@@ -3,6 +3,5 @@ node_modules
 .gitignore
 *.log
 .env
-package-lock.json
 /data-gen
 /prisma/migrations 
