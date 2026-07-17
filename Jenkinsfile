@@ -25,7 +25,7 @@ pipeline {
         }
         stage('Build') {
             steps {
-                sh 'docker compose build'
+                sh 'docker-compose build'
             }
         }
         stage('Trivy Scan') {
@@ -36,21 +36,21 @@ pipeline {
         }
         stage('Deploy') {
             steps {
-                sh 'docker compose down'
-                sh 'docker compose up -d'
+                sh 'docker-compose down'
+                sh 'docker-compose up -d'
             }
         }
     }
     post {
         always {
-            sh 'docker compose ps'
+            sh 'docker-compose ps'
         }
         success {
             echo 'Deploy thanh cong!'
         }
         failure {
             echo 'Pipeline that bai, kiem tra log!'
-            sh 'docker compose logs --tail=50'
+            sh 'docker-compose logs --tail 50'
         }
     }
 }
