@@ -38,6 +38,8 @@ pipeline {
             steps {
                 sh 'docker-compose down'
                 sh 'docker-compose up -d'
+                sh 'sleep 10'  // đợi MySQL khởi động
+                sh 'docker exec cinema_backend npx prisma migrate deploy'
             }
         }
     }
