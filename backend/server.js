@@ -29,17 +29,17 @@ const cookieParser = require('cookie-parser')
 // app.use(globalLimiter);
 
 app.use(express.json());
+dotenv.config();
 
 app.use(cookieParser());
 
 app.use(helmet());
 app.use(cors({
-  origin: 'http://localhost:3000',
+  origin: process.env.CLIENT_URL || 'http://localhost:3000',
   methods: ['GET', 'POST', 'PUT', 'DELETE' , 'PATCH'],
   credentials: true
 }))
 
-dotenv.config();
 app.get("/", (req, res) => {
   res.send("Hello World");
 });
