@@ -45,13 +45,13 @@ app.get("/", (req, res) => {
 });
 
 // app.use("/auth", authLimiter, authRoutes);
-app.use("/auth", authRoutes);
-app.use("/users", profileRoutes);
-app.use("/home", movieRoutes);
-app.use("/seats", seatsRoutes);
-app.use("/showtimes", showtimesRoutes);
-app.use("/tickets", ticketsRoutes);
-app.use("/transactions", require("./src/routes/transaction_routes"));
+app.use("/api/auth", authRoutes);
+app.use("/api/users", profileRoutes);
+app.use("/api/home", movieRoutes);
+app.use("/api/seats", seatsRoutes);
+app.use("/api/showtimes", showtimesRoutes);
+app.use("/api/tickets", ticketsRoutes);
+app.use("/api/transactions", require("./src/routes/transaction_routes"));
 
 app.listen(4000, () => {
   console.log("Server is running on port 4000");
